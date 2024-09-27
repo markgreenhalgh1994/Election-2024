@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Forecasting Methods</title>
+</head>
+<body>
+    <h1>Methods</h1>
+    <h2>1. Political Environment Model</h2>
+    <p>
+        This analysis draws from Alan Lichtman's "13 Keys to the White House," a model used to predict U.S. presidential election outcomes based on a set of true/false conditions concerning the incumbent administration. To enhance the predictive capacity, we employed machine learning algorithms:
+    </p>
+    <ul>
+        <li><strong>Data Preparation:</strong> The "13 Keys" served as predictive features, with election outcomes like the incumbent's percentage of votes, Electoral Votes (EVs), and margin of victory as target variables.</li>
+        <li><strong>Machine Learning Models:</strong> We utilized XGBoost, Random Forest, and Support Vector Regression (SVR) as base models. A Stacking Regressor with Gradient Boosting was applied as a meta-model, combining the predictions from the base models for more nuanced forecasts.</li>
+        <li><strong>Monte Carlo Simulation:</strong> A probabilistic method was used to run 10,000 simulations, assigning random variations to the "13 Keys" based on likelihoods. This provided a distribution of outcomes for Incumbent %, Electoral Votes, and Margin of Victory.</li>
+    </ul>
+
+    <h2>2. Economic Environment Model</h2>
+    <p>The Economic Model integrates key economic indicators that have proven influential in elections:</p>
+    <ul>
+        <li><strong>Economic Metrics:</strong> Drawing from Race to the WH’s methodology, 10 key economic indicators were tracked, including Manufacturing Sales, GDP per capita, housing starts, and consumer sentiment. These were gathered using the Federal Reserve Economic Data (FRED) API, supplemented by NASDAQ data from Yahoo Finance.</li>
+        <li><strong>Data Processing:</strong> Missing data for Manufacturing Sales (before 1992) was imputed using Linear Regression based on related economic variables, followed by interpolation to fill gaps. Year-over-year (YoY) percentage changes were calculated for each indicator.</li>
+        <li><strong>Predictive Modeling:</strong> Economic data was merged with electoral outcomes to predict results using Bayesian Ridge Regression, Gradient Boosting, and XGBoost.</li>
+        <li><strong>Model Evaluation:</strong> Model performance was assessed through R² and Mean Squared Error (MSE), and the best models were saved for further analysis.</li>
+    </ul>
+
+    <h2>3. Polling Model</h2>
+    <p>Polling data serves as an essential snapshot of voter sentiment, allowing real-time adjustments to forecasts:</p>
+    <ul>
+        <li><strong>Data Sourcing and Cleaning:</strong> Polling data was sourced from 538 and split between General Election Polls and State-Level Polls. Data was cleaned and normalized for consistency in pollster names, dates, and handling of missing data.</li>
+        <li><strong>Weighting Mechanism:</strong> Polls were weighted based on multiple factors:
+            <ul>
+                <li>Pollster Quality (using 538’s ratings),</li>
+                <li>Numeric Grades (for transparency and accuracy),</li>
+                <li>Sample Size (larger sample sizes received more weight), and</li>
+                <li>Recency (older polls were weighted less, using an exponential decay function with a 30-day half-life).</li>
+            </ul>
+        </li>
+        <li><strong>Monte Carlo Simulation:</strong> A 10,000-simulation Monte Carlo model was used to estimate each candidate’s likely vote share, with repeated simulations offering an estimate of their probability of winning.</li>
+        <li><strong>Adjustments:</strong>
+            <ul>
+                <li>Economic and Political Indicators were incorporated to refine predictions.</li>
+                <li>Enthusiasm Adjustments were made to reflect energy levels based on special elections and fundraising.</li>
+                <li>PVI Adjustments were applied to state-level data to account for the Partisan Voting Index (PVI).</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>4. Performance in Special Elections</h2>
+    <p>Special elections since the last midterm election provide valuable insights into the 2024 national environment:</p>
+    <ul>
+        <li><strong>Partisan Lean:</strong> For each special election, the partisan lean of the district (i.e., how it voted relative to the national average in past elections) was compared to actual special election results. This comparison allowed us to calculate how much a district overperformed or underperformed relative to its typical partisan lean, serving as an indicator of broader voter sentiment.</li>
+        <li><strong>Weighted Average:</strong> The results from these special elections were combined in a weighted average, with more recent elections receiving greater weight. This method provided an early indication of the potential national environment for 2024.</li>
+        <li><strong>Model Impact:</strong> While special elections alone are not highly predictive, they accounted for 13.5% of the overall national popular vote prediction. Although this percentage may grow with more historical data, it is conservatively set due to the limited availability of special election data prior to 2012.</li>
+    </ul>
+
+    <h2>5. Fundraising (Enthusiasm Adjustment)</h2>
+    <p>Fundraising serves as a measure of campaign strength and enthusiasm, reflecting grassroots support:</p>
+    <ul>
+        <li><strong>Focus on Individual Donations:</strong> The model considers only the amount raised from individual donors, excluding self-funding and superPAC contributions. This measure is more indicative of a campaign’s operational strength and public appeal.</li>
+        <li><strong>Impact on the Model:</strong> Fundraising’s predictive value peaks at 1.2% of the forecast 100 days before the election, decreasing to 0.5% by election day. This Enthusiasm Adjustment prevents over-reliance on fundraising figures, which can sometimes be disproportionately lopsided.</li>
+        <li><strong>Historical Context:</strong> While campaign fundraising was a much stronger predictor in earlier election cycles, its value has diminished in recent years, largely due to the influence of dark money and independent expenditures. However, it still plays a role in signaling the relative strength of a campaign's grassroots engagement.</li>
+    </ul>
+
+    <h2>6. Partisan Voting Index (PVI)</h2>
+    <p>The Partisan Voting Index (PVI) from the Cook Political Report was integrated into state-level forecasts to account for how each state typically leans in presidential elections:</p>
+    <ul>
+        <li><strong>PVI Calculation:</strong> PVI measures how much a state or district leans toward the Democratic or Republican party relative to the national average in past presidential elections. For example, a D+3 PVI indicates that the state or district tends to vote 3% more Democratic than the country as a whole.</li>
+        <li><strong>Application in Modeling:</strong> PVI was used to adjust both polling data and the simulated outcomes in state-level models. States with stronger partisan leans required smaller shifts in voter sentiment to predict a win for a particular candidate.</li>
+        <li><strong>Weighting:</strong> PVI was weighted alongside polling data, economic indicators, and special elections to fine-tune state-level predictions, especially in battleground states. By accounting for partisan lean, the model avoided overestimating the impact of national trends in strongly partisan regions.</li>
+    </ul>
+
+    <h2>7. Weighted Poll Averages</h2>
+    <p>To smooth short-term fluctuations, we calculated the 28-day moving average of polling percentages:</p>
+    <ul>
+        <li><strong>Averaging Approach:</strong> The 28-day moving average for each candidate was calculated to provide a more stable view of polling trends.</li>
+        <li><strong>Pollster-Specific Analysis:</strong> Individual pollster data was weighted and analyzed to detect changes in polling behavior over time.</li>
+    </ul>
+
+    <h2>8. Monte Carlo Simulation and Outcome Statistics</h2>
+    <ul>
+        <li><strong>Simulated Results:</strong> For each candidate, a Monte Carlo simulation provided a range of potential outcomes, including the mean and standard deviation of predicted vote shares.</li>
+        <li><strong>Winning Probabilities:</strong> The simulations also tallied the number of times each candidate "won" a state, estimating the likelihood of their victory in each state.</li>
+        <li><strong>Data Visualization:</strong> Using Microsoft Power BI, we visualized polling trends, weighted means, and simulated outcomes across states, providing an interactive and comprehensive analysis of the 2024 election landscape.</li>
+    </ul>
+
+</body>
+</html>
